@@ -134,7 +134,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'https://recon.artsdata.ca';
+        const API_BASE_URL = "https://db.artsdata.ca/repositories/artsdata";
         let debounceTimer = null;
 
         const searchInput = document.getElementById('placeSearch');
@@ -154,8 +154,6 @@
         // Search places
         async function searchPlaces(query) {
             try {
-                const endpoint = "https://db.artsdata.ca/repositories/artsdata";
-
                 const sparqlQuery = `
                 PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
                 PREFIX luc-index: <http://www.ontotext.com/connectors/lucene/instance#>
@@ -184,7 +182,7 @@
                 const params = new URLSearchParams();
                 params.append("query", sparqlQuery);
 
-                const response = await fetch(endpoint, {
+                const response = await fetch(API_BASE_URL, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded",
@@ -238,7 +236,8 @@
                 <div class="fw-bold flex-grow-1">${name}
                 </div>
                     <span class="badge bg-secondary ms-2">${id}
-                    </span> </div>
+                    </span>
+                </div>
                 ${description ? `<div class="text-secondary small mt-1">${description}</div>` : ''} `;
                 item.addEventListener('click', () => selectOrganization(result));
                 dropdownResults.appendChild(item);
