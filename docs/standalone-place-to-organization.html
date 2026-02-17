@@ -134,7 +134,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = "https://db.artsdata.ca/repositories/artsdata";
+        const API_BASE_URL = "https://staging.db.artsdata.ca/repositories/artsdata";
         let debounceTimer = null;
 
         const searchInput = document.getElementById('placeSearch');
@@ -163,7 +163,7 @@
                 FROM <http://kg.artsdata.ca/core>
                 WHERE {
                     VALUES ?query {
-                        "name: ${query}"
+                        "name:${query} alternateName:${query}"
                     }
                     VALUES ?relationship {
                         ado:managedBy ado:ownedBy ado:usedBy ado:hasResident
@@ -172,11 +172,13 @@
                     luc:query ?query ;
                     luc:entities ?place.
                     ?place a schema:Place;
-                    ?relationship ?org ;
-                    schema:name ?place_label.
+                            ?relationship ?org .
+
+                    FILTER(STRSTARTS(STR(?org), "http://kg.artsdata.ca/resource/"))
+
                     ?org a schema:Organization;
-                    schema:name ?org_label;
-                    schema:disambiguatingDescription ?org_desc.
+                            schema:name ?org_label.
+                    OPTIONAL {?org schema:disambiguatingDescription ?org_desc.}
                 } LIMIT 100`;
 
                 const params = new URLSearchParams();
