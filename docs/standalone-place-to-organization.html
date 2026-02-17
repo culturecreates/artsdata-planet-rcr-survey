@@ -161,6 +161,7 @@
                 PREFIX ado: <http://kg.artsdata.ca/ontology/>
                 SELECT distinct ?org ?org_label ?org_desc
                 FROM <http://kg.artsdata.ca/core>
+                FROM <http://kg.artsdata.ca/disambiguatingDescriptions>
                 WHERE {
                     VALUES ?query {
                         "name:${query} alternateName:${query}"
