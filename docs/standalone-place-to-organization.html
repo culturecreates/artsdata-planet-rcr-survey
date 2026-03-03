@@ -170,8 +170,16 @@
         }
         FILTER(STRSTARTS(STR(?org), "http://kg.artsdata.ca/resource/"))
         ?org a schema:Organization ;
-        schema:name ?org_labels .
-        OPTIONAL {?org schema:disambiguatingDescription ?org_description .}
+
+        OPTIONAL { ?org schema:name ?name_en. FILTER(LANG(?name_en) = "en") }
+        OPTIONAL { ?org schema:name ?name_fr. FILTER(LANG(?name_fr) = "fr") }
+        OPTIONAL { ?org schema:name ?name_no. FILTER(LANG(?name_no) = "") }
+        BIND(COALESCE(?name_en, ?name_fr, ?name_no) AS ?org_labels)
+
+        OPTIONAL { ?org schema:disambiguatingDescription ?desc_en. FILTER(LANG(?desc_en) = "en") }
+        OPTIONAL { ?org schema:disambiguatingDescription ?desc_fr. FILTER(LANG(?desc_fr) = "fr") }
+        OPTIONAL { ?org schema:disambiguatingDescription ?desc_no. FILTER(LANG(?desc_no) = "") }
+        BIND(COALESCE(?desc_en, ?desc_fr, ?desc_no) AS ?org_description)
         }
         GROUP BY ?org
         LIMIT 300`;
