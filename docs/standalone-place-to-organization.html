@@ -156,31 +156,37 @@
             try {
                 const sparqlQuery = `
                 PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
-                PREFIX luc-index: <http://www.ontotext.com/connectors/lucene/instance#>
-                PREFIX schema: <http://schema.org/>
-                PREFIX ado: <http://kg.artsdata.ca/ontology/>
-                SELECT distinct ?org ?org_label ?org_desc
-                FROM <http://kg.artsdata.ca/core>
-                FROM <http://kg.artsdata.ca/disambiguatingDescriptions>
-                WHERE {
-                    VALUES ?query {
-                        "name:${query} alternateName:${query}"
-                    }
-                    VALUES ?relationship {
-                        ado:managedBy ado:ownedBy ado:usedBy ado:hasResident
-                    }
-                    ?search a luc-index:place-index;
-                    luc:query ?query ;
-                    luc:entities ?place.
-                    ?place a schema:Place;
-                            ?relationship ?org .
-
-                    FILTER(STRSTARTS(STR(?org), "http://kg.artsdata.ca/resource/"))
-
-                    ?org a schema:Organization;
-                            schema:name ?org_label.
-                    OPTIONAL {?org schema:disambiguatingDescription ?org_desc.}
-                } LIMIT 100`;
+        PREFIX luc-index: <http://www.ontotext.com/connectors/lucene/instance#>
+        PREFIX schema: <http://schema.org/>
+        PREFIX ado: <http://kg.artsdata.ca/ontology/>
+        SELECT distinct ?org ?org_label ?org_desc
+        FROM <http://kg.artsdata.ca/core>
+        FROM <http://kg.artsdata.ca/disambiguatingDescriptions>
+        WHERE {
+        VALUES ?query {
+           "name:${query} alternateName:${query}"
+        }
+        {
+            ?searchOrg a luc-index:organization-index ;
+            luc:query ?query ;
+            luc:entities ?org .
+        }
+        UNION
+        {
+            VALUES ?relationship {
+                ado:managedBy ado:ownedBy ado:usedBy ado:hasResident
+            }
+            ?search a luc-index:place-index ;
+            luc:query ?query ;
+            luc:entities ?place .
+            ?place a schema:Place ;
+            ?relationship ?org .
+        }
+        FILTER(STRSTARTS(STR(?org), "http://kg.artsdata.ca/resource/"))
+        ?org a schema:Organization ;
+        schema:name ?org_label .
+        OPTIONAL {?org schema:disambiguatingDescription ?org_desc .}
+        }LIMIT 100`;
 
                 const params = new URLSearchParams();
                 params.append("query", sparqlQuery);
