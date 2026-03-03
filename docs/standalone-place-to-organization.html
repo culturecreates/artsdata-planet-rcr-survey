@@ -182,7 +182,7 @@
         BIND(COALESCE(?desc_en, ?desc_fr, ?desc_no) AS ?org_description)
         }
         GROUP BY ?org
-        LIMIT 300`;
+        LIMIT 50`;
 
         let debounceTimer = null;
         const searchInput = document.getElementById('placeSearch');
