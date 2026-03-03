@@ -135,27 +135,9 @@
 
     <script>
         const API_BASE_URL = "https://db.artsdata.ca/repositories/artsdata";
-        let debounceTimer = null;
 
-        const searchInput = document.getElementById('placeSearch');
-        const dropdownResults = document.getElementById('dropdownResults');
-        const searchStatus = document.getElementById('searchStatus');
-        const searchSpinner = document.getElementById('searchSpinner');
-
-        // Extract string from multilingual value
-        function extractString(value) {
-            if (typeof value === 'string') return value;
-            if (value && value.values && value.values.length > 0) {
-                return value.values[0].str || '';
-            }
-            return '';
-        }
-
-        // Search places
-        async function searchPlaces(query) {
-            try {
-                const sparqlQuery = `
-                PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
+        const SPARQL_TEMPLATE =
+        `PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
         PREFIX luc-index: <http://www.ontotext.com/connectors/lucene/instance#>
         PREFIX schema: <http://schema.org/>
         PREFIX ado: <http://kg.artsdata.ca/ontology/>
@@ -168,7 +150,7 @@
         FROM <http://kg.artsdata.ca/disambiguatingDescriptions>
         WHERE {
         VALUES ?query {
-           "name:${query} alternateName:${query}"
+           "name:QUERY_PLACE_HOLDER alternateName:QUERY_PLACE_HOLDER"
         }
         {
             ?searchOrg a luc-index:organization-index ;
@@ -194,6 +176,25 @@
         GROUP BY ?org
         LIMIT 300`;
 
+        let debounceTimer = null;
+        const searchInput = document.getElementById('placeSearch');
+        const dropdownResults = document.getElementById('dropdownResults');
+        const searchStatus = document.getElementById('searchStatus');
+        const searchSpinner = document.getElementById('searchSpinner');
+
+        // Extract string from multilingual value
+        function extractString(value) {
+            if (typeof value === 'string') return value;
+            if (value && value.values && value.values.length > 0) {
+                return value.values[0].str || '';
+            }
+            return '';
+        }
+
+        // Search places
+        async function searchPlaces(query) {
+            try {
+                const sparqlQuery = SPARQL_TEMPLATE.replaceAll("QUERY_PLACE_HOLDER", query);
                 const params = new URLSearchParams();
                 params.append("query", sparqlQuery);
 
