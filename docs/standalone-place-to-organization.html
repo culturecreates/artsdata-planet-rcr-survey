@@ -159,7 +159,11 @@
         PREFIX luc-index: <http://www.ontotext.com/connectors/lucene/instance#>
         PREFIX schema: <http://schema.org/>
         PREFIX ado: <http://kg.artsdata.ca/ontology/>
-        SELECT distinct ?org ?org_label ?org_desc
+
+        SELECT DISTINCT ?org
+        (MIN(?org_labels) AS ?org_label)
+        (MIN(?org_description) AS ?org_desc)
+
         FROM <http://kg.artsdata.ca/core>
         FROM <http://kg.artsdata.ca/disambiguatingDescriptions>
         WHERE {
@@ -184,9 +188,11 @@
         }
         FILTER(STRSTARTS(STR(?org), "http://kg.artsdata.ca/resource/"))
         ?org a schema:Organization ;
-        schema:name ?org_label .
-        OPTIONAL {?org schema:disambiguatingDescription ?org_desc .}
-        }LIMIT 100`;
+        schema:name ?org_labels .
+        OPTIONAL {?org schema:disambiguatingDescription ?org_description .}
+        }
+        GROUP BY ?org
+        LIMIT 300`;
 
                 const params = new URLSearchParams();
                 params.append("query", sparqlQuery);
