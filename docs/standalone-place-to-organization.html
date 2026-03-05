@@ -141,48 +141,59 @@
         PREFIX luc-index: <http://www.ontotext.com/connectors/lucene/instance#>
         PREFIX schema: <http://schema.org/>
         PREFIX ado: <http://kg.artsdata.ca/ontology/>
-
-        SELECT DISTINCT ?org
-        (MIN(?org_labels) AS ?org_label)
-        (MIN(?org_description) AS ?org_desc)
-
+        SELECT
+        ?org
+        (MIN(IF(LANG(?name)="en", ?name, "")) AS ?name_en)
+        (MIN(IF(LANG(?name)="fr", ?name, "")) AS ?name_fr)
+        (MIN(IF(LANG(?name)="", ?name, "")) AS ?name_no)
+        (MIN(IF(LANG(?desc)="en", ?desc, "")) AS ?desc_en)
+        (MIN(IF(LANG(?desc)="fr", ?desc, "")) AS ?desc_fr)
+        (MIN(IF(LANG(?desc)="", ?desc, "")) AS ?desc_no)
         FROM <http://kg.artsdata.ca/core>
         FROM <http://kg.artsdata.ca/disambiguatingDescriptions>
         WHERE {
-        VALUES ?query {
-           "name:QUERY_PLACE_HOLDER alternateName:QUERY_PLACE_HOLDER"
-        }
-        {
-            ?searchOrg a luc-index:organization-index ;
-            luc:query ?query ;
-            luc:entities ?org .
-        }
-        UNION
-        {
-            VALUES ?relationship {
-                ado:managedBy ado:ownedBy ado:usedBy ado:hasResident
+            {
+                SELECT ?org (MAX(?score) AS ?score)
+                WHERE {
+                    VALUES ?query {
+                        "name:QUERY_PLACE_HOLDER alternateName:QUERY_PLACE_HOLDER"
+                    }
+                    {
+                        ?searchOrg a luc-index:organization-index ;
+                        luc:query ?query ;
+                        luc:entities ?org .
+                        ?org luc:score ?score .
+                    }
+                    UNION
+                    {
+                        VALUES ?relationship {
+                            ado:managedBy ado:ownedBy ado:usedBy ado:hasResident
+                        }
+                        ?searchPlace a luc-index:place-index ;
+                        luc:query ?query ;
+                        luc:entities ?place .
+                        ?place a schema:Place ;
+                        luc:score ?score ;
+                        ?relationship ?org .
+                    }
+                    FILTER(STRSTARTS(STR(?org), "http://kg.artsdata.ca/resource/"))
+                }
+                GROUP BY ?org
+                ORDER BY DESC(?score)
+                LIMIT 30
             }
-            ?search a luc-index:place-index ;
-            luc:query ?query ;
-            luc:entities ?place .
-            ?place a schema:Place ;
-            ?relationship ?org .
+            OPTIONAL {
+                ?org schema:name ?name
+                FILTER(LANG(?name) IN ("en","fr",""))
+            }
+            OPTIONAL {
+                ?org schema:disambiguatingDescription ?desc
+                FILTER(LANG(?desc) IN ("en","fr",""))
+            }
         }
-        FILTER(STRSTARTS(STR(?org), "http://kg.artsdata.ca/resource/"))
-        ?org a schema:Organization ;
-
-        OPTIONAL { ?org schema:name ?name_en. FILTER(LANG(?name_en) = "en") }
-        OPTIONAL { ?org schema:name ?name_fr. FILTER(LANG(?name_fr) = "fr") }
-        OPTIONAL { ?org schema:name ?name_no. FILTER(LANG(?name_no) = "") }
-        BIND(COALESCE(?name_en, ?name_fr, ?name_no) AS ?org_labels)
-
-        OPTIONAL { ?org schema:disambiguatingDescription ?desc_en. FILTER(LANG(?desc_en) = "en") }
-        OPTIONAL { ?org schema:disambiguatingDescription ?desc_fr. FILTER(LANG(?desc_fr) = "fr") }
-        OPTIONAL { ?org schema:disambiguatingDescription ?desc_no. FILTER(LANG(?desc_no) = "") }
-        BIND(COALESCE(?desc_en, ?desc_fr, ?desc_no) AS ?org_description)
-        }
-        GROUP BY ?org
-        LIMIT 50`;
+        GROUP BY ?org ?score
+        ORDER BY DESC(?score)
+        `;
 
         let debounceTimer = null;
         const searchInput = document.getElementById('placeSearch');
@@ -233,8 +244,8 @@
                     if (!map.has(id)) {
                         map.set(id, {
                             id,
-                            name: r.org_label?.value || "",
-                            description: r.org_desc?.value || ""
+                            name: r.name_en?.value ||r.name_fr?.value ||r.name_no?.value || "",
+                            description: r.desc_en?.value ||r.desc_fr?.value||r.desc_no?.value|| ""
                         });
                     }
                 });
