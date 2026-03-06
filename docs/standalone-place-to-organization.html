@@ -179,8 +179,11 @@
                         luc:query ?query ;
                         luc:entities ?place .
                         ?place a schema:Place ;
-                        luc:score ?score ;
-                        ?relationship ?org .
+                        luc:score ?score.
+                    ?place (^schema:containedInPlace/ado:managedBy |
+                    ^schema:containedInPlace/ado:ownedBy |
+                    ^schema:containedInPlace/ado:usedBy |
+                    ^schema:containedInPlace/ado:hasResident) ?org .
                     }
                     FILTER(STRSTARTS(STR(?org), "http://kg.artsdata.ca/resource/"))
                 }
