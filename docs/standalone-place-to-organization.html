@@ -76,6 +76,11 @@
                     </p>
                 </div>
 
+                <label for="regionSelect" class="form-label">Select Address Region</label>
+                <select id="regionSelect" class="form-select mb-3">
+                    <option value="">Select address region</option>
+                </select>
+
                 <!-- Field Label (Outside React Widget) -->
                 <label for="placeSearch" class="form-label">Select a Organization</label>
                 
@@ -135,6 +140,7 @@
 
     <script>
         const API_BASE_URL = "https://db.artsdata.ca/repositories/artsdata";
+        const ARTSDATA_URI_PREFIX = "http://kg.artsdata.ca/resource/";
 
         const SPARQL_TEMPLATE =
         `PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
@@ -156,7 +162,7 @@
                 SELECT ?org (MAX(?score) AS ?score)
                 WHERE {
                     VALUES ?query {
-                        "name:QUERY_PLACE_HOLDER alternateName:QUERY_PLACE_HOLDER"
+                        "name:QUERY_PLACE_HOLDER alternateName:QUERY_PLACE_HOLDER ADDRESS_REGION_QUERY_PLACEHOLDER"
                     }
                     {
                         ?searchOrg a luc-index:organization-index ;
@@ -196,6 +202,8 @@
         `;
 
         let debounceTimer = null;
+        let selectedRegion = null;
+        let searchQuery = null;
         const searchInput = document.getElementById('placeSearch');
         const dropdownResults = document.getElementById('dropdownResults');
         const searchStatus = document.getElementById('searchStatus');
@@ -211,9 +219,10 @@
         }
 
         // Search places
-        async function searchPlaces(query) {
+        async function searchPlaces(query, region) {
             try {
-                const sparqlQuery = SPARQL_TEMPLATE.replaceAll("QUERY_PLACE_HOLDER", query);
+                const sparqlQuery = SPARQL_TEMPLATE.replaceAll("QUERY_PLACE_HOLDER", `${query}^5`)
+                    .replace("ADDRESS_REGION_QUERY_PLACEHOLDER", region ? `addressRegion:${region}` : '');
                 const params = new URLSearchParams();
                 params.append("query", sparqlQuery);
 
@@ -240,7 +249,7 @@
 
                 const map = new Map();
                 bindings.forEach(r => {
-                    const id = r.org.value.split('http://kg.artsdata.ca/resource/').pop();
+                    const id = r.org.value.split(ARTSDATA_URI_PREFIX).pop();
                     if (!map.has(id)) {
                         map.set(id, {
                             id,
@@ -290,7 +299,7 @@
             // Update external section
             document.getElementById('external-name').textContent = name;
             document.getElementById('external-id').textContent = id;
-            document.getElementById('external-id').href = `http://kg.artsdata.ca/resource/${id}`;
+            document.getElementById('external-id').href = `${ARTSDATA_URI_PREFIX}${id}`;
             document.getElementById('external-description').textContent = description || 'N/A';
             document.getElementById('external-result-content').style.display = 'block';
             document.getElementById('external-result').classList.add('has-data');
@@ -303,12 +312,13 @@
         // Handle input with debounce
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value;
+            searchQuery = query.trim()
 
             if (debounceTimer) {
                 clearTimeout(debounceTimer);
             }
 
-            if (!query.trim()) {
+            if (!searchQuery) {
                 dropdownResults.classList.remove('show');
                 searchStatus.style.display = 'none';
                 searchSpinner.style.display = 'none';
@@ -318,19 +328,48 @@
             searchSpinner.style.display = 'flex';
             searchStatus.style.display = 'none';
 
+
             debounceTimer = setTimeout(async () => {
-                try {
-                    const results = await searchPlaces(query);
-                    displayResults(results);
-                    searchSpinner.style.display = 'none';
-                } catch (error) {
-                    searchSpinner.style.display = 'none';
-                    searchStatus.querySelector('small').textContent = 'Failed to fetch results. Please try again.';
-                    searchStatus.style.display = 'block';
-                    dropdownResults.classList.remove('show');
-                }
+                await searchAndDisplayResult(searchQuery, selectedRegion)
+
             }, 200); // 1 second debounce
         });
+
+        async function searchAndDisplayResult(query, selectedRegion) {
+            try {
+                const results = await searchPlaces(query, selectedRegion);
+                displayResults(results);
+                searchSpinner.style.display = 'none';
+            } catch (error) {
+                searchSpinner.style.display = 'none';
+                searchStatus.querySelector('small').textContent = 'Failed to fetch results. Please try again.';
+                searchStatus.style.display = 'block';
+                dropdownResults.classList.remove('show');
+            }
+        }
+
+        const regionSelect = document.getElementById("regionSelect");
+        const regions = ["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"]
+        regions.forEach(region => {
+            const option = document.createElement("option");
+            option.value = region;
+            option.textContent = region;
+            regionSelect.appendChild(option);
+        });
+
+
+        regionSelect.addEventListener("change", async (e) => {
+            selectedRegion = e.target.value;
+            if (searchQuery) {
+                searchSpinner.style.display = 'flex';
+                searchStatus.style.display = 'none';
+                debounceTimer = setTimeout(async () => {
+                    await searchAndDisplayResult(searchQuery, selectedRegion)
+
+                }, 200); // 1 second debounce
+            }
+        });
+
 
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
