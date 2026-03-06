@@ -140,6 +140,7 @@
 
     <script>
         const API_BASE_URL = "https://db.artsdata.ca/repositories/artsdata";
+        const ARTSDATA_URI_PREFIX = "http://kg.artsdata.ca/resource/";
 
         const SPARQL_TEMPLATE =
         `PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
@@ -248,7 +249,7 @@
 
                 const map = new Map();
                 bindings.forEach(r => {
-                    const id = r.org.value.split('http://kg.artsdata.ca/resource/').pop();
+                    const id = r.org.value.split(ARTSDATA_URI_PREFIX).pop();
                     if (!map.has(id)) {
                         map.set(id, {
                             id,
@@ -298,7 +299,7 @@
             // Update external section
             document.getElementById('external-name').textContent = name;
             document.getElementById('external-id').textContent = id;
-            document.getElementById('external-id').href = `http://kg.artsdata.ca/resource/${id}`;
+            document.getElementById('external-id').href = `${ARTSDATA_URI_PREFIX}${id}`;
             document.getElementById('external-description').textContent = description || 'N/A';
             document.getElementById('external-result-content').style.display = 'block';
             document.getElementById('external-result').classList.add('has-data');
