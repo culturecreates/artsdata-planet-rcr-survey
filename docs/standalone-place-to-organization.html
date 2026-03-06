@@ -221,8 +221,8 @@
         // Search places
         async function searchPlaces(query, region) {
             try {
-                const sparqlQuery = SPARQL_TEMPLATE.replaceAll("QUERY_PLACE_HOLDER", query)
-                    .replace("ADDRESS_REGION_QUERY_PLACEHOLDER", region ? `addressRegion:${region}^5` : '');
+                const sparqlQuery = SPARQL_TEMPLATE.replaceAll("QUERY_PLACE_HOLDER", `${query}^5`)
+                    .replace("ADDRESS_REGION_QUERY_PLACEHOLDER", region ? `addressRegion:${region}` : '');
                 const params = new URLSearchParams();
                 params.append("query", sparqlQuery);
 
