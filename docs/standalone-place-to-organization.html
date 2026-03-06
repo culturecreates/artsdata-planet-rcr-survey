@@ -76,6 +76,11 @@
                     </p>
                 </div>
 
+                <label for="regionSelect" class="form-label">Select Address Region</label>
+                <select id="regionSelect" class="form-select mb-3">
+                    <option value="">Select address region</option>
+                </select>
+
                 <!-- Field Label (Outside React Widget) -->
                 <label for="placeSearch" class="form-label">Select a Organization</label>
                 
@@ -156,7 +161,7 @@
                 SELECT ?org (MAX(?score) AS ?score)
                 WHERE {
                     VALUES ?query {
-                        "name:QUERY_PLACE_HOLDER alternateName:QUERY_PLACE_HOLDER"
+                        "name:QUERY_PLACE_HOLDER alternateName:QUERY_PLACE_HOLDER ADDRESS_REGION_QUERY_PLACEHOLDER"
                     }
                     {
                         ?searchOrg a luc-index:organization-index ;
@@ -196,6 +201,8 @@
         `;
 
         let debounceTimer = null;
+        let selectedRegion = null;
+        let searchQuery = null;
         const searchInput = document.getElementById('placeSearch');
         const dropdownResults = document.getElementById('dropdownResults');
         const searchStatus = document.getElementById('searchStatus');
@@ -211,9 +218,10 @@
         }
 
         // Search places
-        async function searchPlaces(query) {
+        async function searchPlaces(query, region) {
             try {
-                const sparqlQuery = SPARQL_TEMPLATE.replaceAll("QUERY_PLACE_HOLDER", query);
+                const sparqlQuery = SPARQL_TEMPLATE.replaceAll("QUERY_PLACE_HOLDER", query)
+                    .replace("ADDRESS_REGION_QUERY_PLACEHOLDER", region ? `addressRegion:${region}^5` : '');
                 const params = new URLSearchParams();
                 params.append("query", sparqlQuery);
 
@@ -303,12 +311,13 @@
         // Handle input with debounce
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value;
+            searchQuery = query.trim()
 
             if (debounceTimer) {
                 clearTimeout(debounceTimer);
             }
 
-            if (!query.trim()) {
+            if (!searchQuery) {
                 dropdownResults.classList.remove('show');
                 searchStatus.style.display = 'none';
                 searchSpinner.style.display = 'none';
@@ -318,19 +327,48 @@
             searchSpinner.style.display = 'flex';
             searchStatus.style.display = 'none';
 
+
             debounceTimer = setTimeout(async () => {
-                try {
-                    const results = await searchPlaces(query);
-                    displayResults(results);
-                    searchSpinner.style.display = 'none';
-                } catch (error) {
-                    searchSpinner.style.display = 'none';
-                    searchStatus.querySelector('small').textContent = 'Failed to fetch results. Please try again.';
-                    searchStatus.style.display = 'block';
-                    dropdownResults.classList.remove('show');
-                }
+                await searchAndDisplayResult(searchQuery, selectedRegion)
+
             }, 200); // 1 second debounce
         });
+
+        async function searchAndDisplayResult(query, selectedRegion) {
+            try {
+                const results = await searchPlaces(query, selectedRegion);
+                displayResults(results);
+                searchSpinner.style.display = 'none';
+            } catch (error) {
+                searchSpinner.style.display = 'none';
+                searchStatus.querySelector('small').textContent = 'Failed to fetch results. Please try again.';
+                searchStatus.style.display = 'block';
+                dropdownResults.classList.remove('show');
+            }
+        }
+
+        const regionSelect = document.getElementById("regionSelect");
+        const regions = ["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"]
+        regions.forEach(region => {
+            const option = document.createElement("option");
+            option.value = region;
+            option.textContent = region;
+            regionSelect.appendChild(option);
+        });
+
+
+        regionSelect.addEventListener("change", async (e) => {
+            selectedRegion = e.target.value;
+            if (searchQuery) {
+                searchSpinner.style.display = 'flex';
+                searchStatus.style.display = 'none';
+                debounceTimer = setTimeout(async () => {
+                    await searchAndDisplayResult(searchQuery, selectedRegion)
+
+                }, 200); // 1 second debounce
+            }
+        });
+
 
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
