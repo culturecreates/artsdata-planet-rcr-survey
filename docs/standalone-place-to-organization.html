@@ -185,9 +185,17 @@
         (?entities as ?entityId)
         (MAX(?place_name) as ?place_name)
         ?org
-        (MAX(?org_name) as ?org_name)
-        (MAX(?org_desc) as ?org_desc)
-        (MAX(?score) as ?score)
+        (MIN(IF(LANG(?org_name)="en", ?org_name, "")) AS ?org_name_en)
+        (MIN(IF(LANG(?org_name)="fr", ?org_name, "")) AS ?org_name_fr)
+        (MIN(IF(LANG(?org_name)="", ?org_name, "")) AS ?org_name_no)
+        (MIN(IF(LANG(?org_desc)="en", ?org_desc, "")) AS ?org_desc_en)
+        (MIN(IF(LANG(?org_desc)="fr", ?org_desc, "")) AS ?org_desc_fr)
+        (MIN(IF(LANG(?org_desc)="", ?org_desc, "")) AS ?org_desc_no)
+        (MIN(IF(LANG(?place_name)="en", ?place_name, "")) AS ?place_name_en)
+        (MIN(IF(LANG(?place_name)="fr", ?place_name, "")) AS ?place_name_fr)
+        (MIN(IF(LANG(?place_name)="", ?place_name, "")) AS ?place_name_no)
+        FROM <http://kg.artsdata.ca/core>
+        FROM <http://kg.artsdata.ca/disambiguatingDescriptions>
         WHERE {
             ?search a luc-index:all-literals ;
             QUERY_PLACEHOLDER
@@ -198,14 +206,23 @@
                 BIND(schema:Organization as ?type)
             } UNION {
                 ?entities a schema:Place  ;
-                schema:name ?place_name .
+                OPTIONAL {
+                    ?entities schema:name ?place_name .
+                FILTER(LANG(?place_name) IN ("en","fr",""))
+            }
                 BIND(schema:Place as ?type)
                 ?entities (ado:usedBy | ado:ownedBy | ado:hasResident | ado:managedBy ) ?org .
             }
             BIND(IF(bound(?org),?org,?entities) as ?selected)
             FILTER(?score > 3)
-            ?selected schema:name ?org_name;
-                    schema:disambiguatingDescription ?org_desc.
+             OPTIONAL {
+                ?selected schema:name ?org_name
+                FILTER(LANG(?org_name) IN ("en","fr",""))
+            }
+            OPTIONAL {
+                ?selected schema:disambiguatingDescription ?org_desc
+                FILTER(LANG(?org_desc) IN ("en","fr",""))
+            }
         } GROUP BY ?entities ?org
         ORDER BY ?type DESC(?score)
         LIMIT 30`;
@@ -254,6 +271,19 @@
             const altNameQuery = fuzzyTerms.join(' AND ');
             return `luc:query "(name:${nameQuery})^3 OR (alternateName:${altNameQuery})";`;
         }
+
+        function getValueInLang(label_en, label_fr, label_no, currentLang) {
+            label_en = label_en?.value
+            label_fr = label_fr?.value
+            label_no = label_no?.value
+
+            if (currentLang === 'fr') {
+                return label_fr || label_no || label_en;
+            } else {
+                return label_en || label_no || label_fr
+            }
+        }
+
         // Search places
         async function searchPlaces(query, region) {
 
@@ -287,19 +317,27 @@
                 const map = new Map();
                 bindings.forEach(r => {
                     const id = r.organization_selected.value.split(ARTSDATA_URI_PREFIX).pop();
-                    const name = r.place_name ? `${r.org_name?.value} via [${[r.place_name?.value]}]` : r.org_name?.value || "";
-                    const desc = r.org_desc?.value|| "";
+                    const orgName = getValueInLang(r.org_name_en, r.org_name_fr, r.org_name_no, currentLang);
+
+                    let name;
+                    if (r.place_name_en || r.place_name_fr || r.place_name_no) {
+                        const placeName = getValueInLang(r.place_name_en, r.place_name_fr, r.place_name_no, currentLang);
+                        name = `${orgName} via [ ${placeName} ]`;
+                    } else {
+                        name = orgName;
+                    }
+
                     if (!map.has(id)) {
                         map.set(id, {
                             id,
-                            name: name,
-                            description: desc
+                            name,
+                            description: getValueInLang(r.org_desc_en, r.org_desc_fr, r.org_desc_no, currentLang)
                         });
                     }
                 });
                 return Array.from(map.values());
             } catch (error) {
-                console.error('Error fetching places:', error);
+                console.error('Error fetching results:', error);
                 throw error;
             }
         }
