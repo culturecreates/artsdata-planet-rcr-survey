@@ -147,31 +147,35 @@
         PREFIX schema: <http://schema.org/>
         PREFIX luc-index: <http://www.ontotext.com/connectors/lucene/instance#>
         PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
-        select  (SAMPLE(?selected) as ?selected) (MIN(?reason) as ?reason)  ?entities (max(?name) as ?name) (MAX(?score) as ?score) (SAMPLE(?type) as ?type) ?org2 (MAX(?org_name) as ?org_name)
-        where {
+        SELECT
+        (SAMPLE(?selected) as ?organization_selected)
+        (?entities as ?entityId)
+        (MAX(?place_name) as ?place_name)
+        ?org
+        (MAX(?org_name) as ?org_name)
+        (MAX(?org_desc) as ?org_desc)
+        (MAX(?score) as ?score)
+        WHERE {
             ?search a luc-index:all-literals ;
             QUERY_PLACEHOLDER
             luc:entities ?entities .
             ?entities luc:score ?score .
             {
-                ?entities a schema:Organization  ;
-                schema:name ?name .
-                bind(schema:Organization as ?type)
+                ?entities a schema:Organization  .
+                BIND(schema:Organization as ?type)
             } UNION {
                 ?entities a schema:Place  ;
-                schema:name ?name .
-                bind(schema:Place as ?type)
-                ?entities (ado:usedBy | ado:ownedBy | ado:hasResident | ado:managedBy ) ?org2 .
-                ?org2 schema:name ?org_name .
+                schema:name ?place_name .
+                BIND(schema:Place as ?type)
+                ?entities (ado:usedBy | ado:ownedBy | ado:hasResident | ado:managedBy ) ?org .
             }
-            BIND(IF(bound(?org2),?org2,?entities) as ?selected)
-            OPTIONAL {
-                BIND(IF(bound(?org2),"uses place","org name matches")  as ?reason)
-            }
-            filter(?score > 3)
-        } group by ?entities ?org2
-        order by ?type DESC(?score)
-        limit 30`;
+            BIND(IF(bound(?org),?org,?entities) as ?selected)
+            FILTER(?score > 3)
+            ?selected schema:name ?org_name;
+                    schema:disambiguatingDescription ?org_desc.
+        } GROUP BY ?entities ?org
+        ORDER BY ?type DESC(?score)
+        LIMIT 30`;
 
         let debounceTimer = null;
         let selectedRegion = null;
@@ -229,9 +233,9 @@
 
                 const map = new Map();
                 bindings.forEach(r => {
-                    const id = r.selected.value.split(ARTSDATA_URI_PREFIX).pop();
-                    const name = r.org_name ? `${r.org_name?.value} via [${[r.name?.value]}]` : r.name?.value || "";
-                    const desc = r.org_desc?.value ||r.desc?.value || "";
+                    const id = r.organization_selected.value.split(ARTSDATA_URI_PREFIX).pop();
+                    const name = r.place_name ? `${r.org_name?.value} via [${[r.place_name?.value]}]` : r.org_name?.value || "";
+                    const desc = r.org_desc?.value|| "";
                     if (!map.has(id)) {
                         map.set(id, {
                             id,
