@@ -143,66 +143,35 @@
         const ARTSDATA_URI_PREFIX = "http://kg.artsdata.ca/resource/";
 
         const SPARQL_TEMPLATE =
-        `PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
-        PREFIX luc-index: <http://www.ontotext.com/connectors/lucene/instance#>
+            `PREFIX ado: <http://kg.artsdata.ca/ontology/>
         PREFIX schema: <http://schema.org/>
-        PREFIX ado: <http://kg.artsdata.ca/ontology/>
-        SELECT
-        ?org
-        (MIN(IF(LANG(?name)="en", ?name, "")) AS ?name_en)
-        (MIN(IF(LANG(?name)="fr", ?name, "")) AS ?name_fr)
-        (MIN(IF(LANG(?name)="", ?name, "")) AS ?name_no)
-        (MIN(IF(LANG(?desc)="en", ?desc, "")) AS ?desc_en)
-        (MIN(IF(LANG(?desc)="fr", ?desc, "")) AS ?desc_fr)
-        (MIN(IF(LANG(?desc)="", ?desc, "")) AS ?desc_no)
-        FROM <http://kg.artsdata.ca/core>
-        FROM <http://kg.artsdata.ca/disambiguatingDescriptions>
-        WHERE {
+        PREFIX luc-index: <http://www.ontotext.com/connectors/lucene/instance#>
+        PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
+        select  (SAMPLE(?selected) as ?selected) (MIN(?reason) as ?reason)  ?entities (max(?name) as ?name) (MAX(?score) as ?score) (SAMPLE(?type) as ?type) ?org2 (MAX(?org_name) as ?org_name)
+        where {
+            ?search a luc-index:all-literals ;
+            QUERY_PLACEHOLDER
+            luc:entities ?entities .
+            ?entities luc:score ?score .
             {
-                SELECT ?org (MAX(?score) AS ?score)
-                WHERE {
-                    VALUES ?query {
-                        "name:QUERY_PLACE_HOLDER alternateName:QUERY_PLACE_HOLDER ADDRESS_REGION_QUERY_PLACEHOLDER"
-                    }
-                    {
-                        ?searchOrg a luc-index:organization-index ;
-                        luc:query ?query ;
-                        luc:entities ?org .
-                        ?org luc:score ?score .
-                    }
-                    UNION
-                    {
-                        VALUES ?relationship {
-                            ado:managedBy ado:ownedBy ado:usedBy ado:hasResident
-                        }
-                        ?searchPlace a luc-index:place-index ;
-                        luc:query ?query ;
-                        luc:entities ?place .
-                        ?place a schema:Place ;
-                        luc:score ?score.
-                    ?place (^schema:containedInPlace/ado:managedBy |
-                    ^schema:containedInPlace/ado:ownedBy |
-                    ^schema:containedInPlace/ado:usedBy |
-                    ^schema:containedInPlace/ado:hasResident) ?org .
-                    }
-                    FILTER(STRSTARTS(STR(?org), "http://kg.artsdata.ca/resource/"))
-                }
-                GROUP BY ?org
-                ORDER BY DESC(?score)
-                LIMIT 30
+                ?entities a schema:Organization  ;
+                schema:name ?name .
+                bind(schema:Organization as ?type)
+            } UNION {
+                ?entities a schema:Place  ;
+                schema:name ?name .
+                bind(schema:Place as ?type)
+                ?entities (ado:usedBy | ado:ownedBy | ado:hasResident | ado:managedBy ) ?org2 .
+                ?org2 schema:name ?org_name .
             }
+            BIND(IF(bound(?org2),?org2,?entities) as ?selected)
             OPTIONAL {
-                ?org schema:name ?name
-                FILTER(LANG(?name) IN ("en","fr",""))
+                BIND(IF(bound(?org2),"uses place","org name matches")  as ?reason)
             }
-            OPTIONAL {
-                ?org schema:disambiguatingDescription ?desc
-                FILTER(LANG(?desc) IN ("en","fr",""))
-            }
-        }
-        GROUP BY ?org ?score
-        ORDER BY DESC(?score)
-        `;
+            filter(?score > 3)
+        } group by ?entities ?org2
+        order by ?type DESC(?score)
+        limit 30`;
 
         let debounceTimer = null;
         let selectedRegion = null;
@@ -221,12 +190,20 @@
             return '';
         }
 
+        function transformSearchQuery(query) {
+            const terms = query.toLowerCase().split(/\s+/);
+            const fuzzyTerms = terms.map(term => `${term}~2`);
+            const nameQuery = fuzzyTerms.join(' AND ');
+            const altNameQuery = fuzzyTerms.join(' AND ');
+            return `luc:query "(name:${nameQuery})^3 OR (alternateName:${altNameQuery})";`;
+        }
         // Search places
         async function searchPlaces(query, region) {
+
             try {
-                const sparqlQuery = SPARQL_TEMPLATE.replaceAll("QUERY_PLACE_HOLDER", `${query}^2`)
-                    .replace("ADDRESS_REGION_QUERY_PLACEHOLDER", region ? `addressRegion:${region}` : '');
-                const params = new URLSearchParams();
+                const sparqlQuery = SPARQL_TEMPLATE
+                    .replace("QUERY_PLACEHOLDER", transformSearchQuery(query));
+               const params = new URLSearchParams();
                 params.append("query", sparqlQuery);
 
                 const response = await fetch(API_BASE_URL, {
@@ -252,12 +229,14 @@
 
                 const map = new Map();
                 bindings.forEach(r => {
-                    const id = r.org.value.split(ARTSDATA_URI_PREFIX).pop();
+                    const id = r.selected.value.split(ARTSDATA_URI_PREFIX).pop();
+                    const name = r.org_name ? `${r.org_name?.value}` : r.name?.value || "";
+                    const desc = r.org_desc?.value ||r.desc?.value || "";
                     if (!map.has(id)) {
                         map.set(id, {
                             id,
-                            name: r.name_en?.value ||r.name_fr?.value ||r.name_no?.value || "",
-                            description: r.desc_en?.value ||r.desc_fr?.value||r.desc_no?.value|| ""
+                            name: name,
+                            description: desc
                         });
                     }
                 });
