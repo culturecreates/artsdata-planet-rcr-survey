@@ -230,7 +230,7 @@
                 const map = new Map();
                 bindings.forEach(r => {
                     const id = r.selected.value.split(ARTSDATA_URI_PREFIX).pop();
-                    const name = r.org_name ? `${r.org_name?.value}` : r.name?.value || "";
+                    const name = r.org_name ? `${r.org_name?.value} via [${[r.name?.value]}]` : r.name?.value || "";
                     const desc = r.org_desc?.value ||r.desc?.value || "";
                     if (!map.has(id)) {
                         map.set(id, {
