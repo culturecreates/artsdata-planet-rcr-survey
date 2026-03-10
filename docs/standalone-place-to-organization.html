@@ -265,6 +265,7 @@
         }
 
         function transformSearchQuery(query) {
+            query = query.replace(/[-!():]/g, " ").replace(/\s+/g, " ").trim()
             const terms = query.toLowerCase().split(/\s+/);
             const fuzzyTerms = terms.map(term => `${term}~2`);
             const nameQuery = fuzzyTerms.join(' AND ');
