@@ -268,9 +268,9 @@
             query = query.replace(/[-!():]/g, " ").replace(/\s+/g, " ").trim()
             const terms = query.toLowerCase().split(/\s+/);
             const fuzzyTerms = terms.map(term => `${term}~2`);
-            const nameQuery = fuzzyTerms.join(' AND ');
-            const altNameQuery = fuzzyTerms.join(' AND ');
-            return `luc:query "(name:${nameQuery})^3 OR (alternateName:${altNameQuery})";`;
+            const nameQuery = fuzzyTerms.map(term => `name:${term}`).join(' AND ');
+            const altNameQuery = fuzzyTerms.map(term => `alternateName:${term}`).join(' AND ');
+            return `luc:query "(${nameQuery})^3 OR (${altNameQuery})";`;
         }
 
         function getValueInLang(label_en, label_fr, label_no, currentLang) {
