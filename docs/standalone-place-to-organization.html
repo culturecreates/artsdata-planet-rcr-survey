@@ -194,7 +194,7 @@
         (MIN(IF(LANG(?place_name)="en", ?place_name, "")) AS ?place_name_en)
         (MIN(IF(LANG(?place_name)="fr", ?place_name, "")) AS ?place_name_fr)
         (MIN(IF(LANG(?place_name)="", ?place_name, "")) AS ?place_name_no)
-        
+        (SAMPLE(?type) as ?type)
 
         WHERE {
             ?search a luc-index:all-literals ;
