@@ -265,7 +265,7 @@
         }
 
         function transformSearchQuery(query) {
-            query = query.replace(/[-!():]/g, " ").replace(/\s+/g, " ").trim()
+            query = query.replace(/[\[\-!():\]]/g, " ").replace(/\s+/g, " ").trim()
             const terms = query.toLowerCase().split(/\s+/);
             const fuzzyTerms = terms.map(term => `${term}~2`);
             const nameQuery = fuzzyTerms.map(term => `name:${term}`).join(' AND ');
@@ -323,7 +323,7 @@
                     let name;
                     if (r.place_name_en || r.place_name_fr || r.place_name_no) {
                         const placeName = getValueInLang(r.place_name_en, r.place_name_fr, r.place_name_no, currentLang);
-                        name = `${orgName} via [ ${placeName} ]`;
+                        name = `${orgName} --> via [ ${placeName} ]`;
                     } else {
                         name = orgName;
                     }
