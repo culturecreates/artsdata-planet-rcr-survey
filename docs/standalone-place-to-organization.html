@@ -194,8 +194,8 @@
         (MIN(IF(LANG(?place_name)="en", ?place_name, "")) AS ?place_name_en)
         (MIN(IF(LANG(?place_name)="fr", ?place_name, "")) AS ?place_name_fr)
         (MIN(IF(LANG(?place_name)="", ?place_name, "")) AS ?place_name_no)
-        FROM <http://kg.artsdata.ca/core>
-        FROM <http://kg.artsdata.ca/disambiguatingDescriptions>
+        
+
         WHERE {
             ?search a luc-index:all-literals ;
             QUERY_PLACEHOLDER
