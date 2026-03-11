@@ -264,6 +264,14 @@
 
         function transformSearchQuery(query) {
             query = query.replace(/[\[\-!():\]]/g, " ").replace(/\s+/g, " ").trim()
+
+            const luceneSpecialChars = ["+", "||", "{", "}", "[", "]", "^", "\"", "~", "*", "?", "\\", "/", "&&"];
+            query = Array.from(query).map(char =>
+                luceneSpecialChars.includes(char)
+                    ? (char === "\\" ? `\\${char}`
+                        : `\\\\${char}`) : char
+            ).join("");
+
             const terms = query.toLowerCase().split(/\s+/);
             const fuzzyTerms = terms.map(term => `${term}~2`);
             const nameQuery = fuzzyTerms.map(term => `name:${term}`).join(' AND ');
