@@ -271,18 +271,6 @@
             return `luc:query "(${nameQuery})^3 OR (${altNameQuery})";`;
         }
 
-        function getValueInLang(label_en, label_fr, label_no, currentLang) {
-            label_en = label_en?.value
-            label_fr = label_fr?.value
-            label_no = label_no?.value
-
-            if (currentLang === 'fr') {
-                return label_fr || label_no || label_en;
-            } else {
-                return label_en || label_no || label_fr
-            }
-        }
-
         // Search places
         async function searchPlaces(query, region, currentLang) {
 
