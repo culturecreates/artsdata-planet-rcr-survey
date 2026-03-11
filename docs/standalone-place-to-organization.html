@@ -181,19 +181,12 @@
         PREFIX luc-index: <http://www.ontotext.com/connectors/lucene/instance#>
         PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
         SELECT
-        (SAMPLE(?selected) as ?organization_selected)
+        (SAMPLE(?selected) as ?org_selected)
         (?entities as ?entityId)
-        (MAX(?place_name) as ?place_name)
         ?org
-        (MIN(IF(LANG(?org_name)="en", ?org_name, "")) AS ?org_name_en)
-        (MIN(IF(LANG(?org_name)="fr", ?org_name, "")) AS ?org_name_fr)
-        (MIN(IF(LANG(?org_name)="", ?org_name, "")) AS ?org_name_no)
-        (MIN(IF(LANG(?org_desc)="en", ?org_desc, "")) AS ?org_desc_en)
-        (MIN(IF(LANG(?org_desc)="fr", ?org_desc, "")) AS ?org_desc_fr)
-        (MIN(IF(LANG(?org_desc)="", ?org_desc, "")) AS ?org_desc_no)
-        (MIN(IF(LANG(?place_name)="en", ?place_name, "")) AS ?place_name_en)
-        (MIN(IF(LANG(?place_name)="fr", ?place_name, "")) AS ?place_name_fr)
-        (MIN(IF(LANG(?place_name)="", ?place_name, "")) AS ?place_name_no)
+        (MIN(IF(BOUND(?org_name_lang), ?org_name_lang, ?org_name_anylang)) as ?org_name)
+        (MIN(IF(BOUND(?name_user_lang), ?name_user_lang, ?org_desc_anylang)) as ?org_desc)
+        (MIN(IF(BOUND(?place_name_lang), ?place_name_lang, ?place_name_anylang)) as ?place_name)
         (SAMPLE(?type) as ?type)
 
         WHERE {
@@ -206,22 +199,27 @@
                 BIND(schema:Organization as ?type)
             } UNION {
                 ?entities a schema:Place  ;
+                schema:name ?place_name_anylang .
                 OPTIONAL {
-                    ?entities schema:name ?place_name .
-                FILTER(LANG(?place_name) IN ("en","fr",""))
+               ?entities schema:name ?place_name_lang .
+                filter(Lang(?place_name_lang) = "USER_LANGUAGE_PLACEHOLDER")
             }
                 BIND(schema:Place as ?type)
                 ?entities (ado:usedBy | ado:ownedBy | ado:hasResident | ado:managedBy ) ?org .
             }
             BIND(IF(bound(?org),?org,?entities) as ?selected)
             FILTER(?score > 3)
-             OPTIONAL {
-                ?selected schema:name ?org_name
-                FILTER(LANG(?org_name) IN ("en","fr",""))
+
+            ?selected schema:name ?org_name_anylang.
+            ?selected schema:disambiguatingDescription ?org_desc_anylang.
+
+            OPTIONAL {
+               ?selected schema:name ?org_name_lang .
+                filter(Lang(?org_name_lang) = "USER_LANGUAGE_PLACEHOLDER")
             }
             OPTIONAL {
-                ?selected schema:disambiguatingDescription ?org_desc
-                FILTER(LANG(?org_desc) IN ("en","fr",""))
+               ?selected schema:disambiguatingDescription ?org_desc_lang .
+                filter(Lang(?org_desc_lang) = "USER_LANGUAGE_PLACEHOLDER")
             }
         } GROUP BY ?entities ?org
         ORDER BY ?type DESC(?score)
@@ -251,7 +249,7 @@
             currentLang = currentLang === 'en' ? 'fr' : 'en';
             updateUI();
             if (searchInput.value.trim()) {
-                searchAndDisplayResult(searchInput.value.trim());
+                searchAndDisplayResult(searchInput.value.trim(), selectedRegion, currentLang);
             }
         });
 
@@ -286,11 +284,12 @@
         }
 
         // Search places
-        async function searchPlaces(query, region) {
+        async function searchPlaces(query, region, currentLang) {
 
             try {
                 const sparqlQuery = SPARQL_TEMPLATE
-                    .replace("QUERY_PLACEHOLDER", transformSearchQuery(query));
+                    .replace("QUERY_PLACEHOLDER", transformSearchQuery(query))
+                    .replaceAll("USER_LANGUAGE_PLACEHOLDER", currentLang.toLowerCase());
                const params = new URLSearchParams();
                 params.append("query", sparqlQuery);
 
@@ -317,22 +316,19 @@
 
                 const map = new Map();
                 bindings.forEach(r => {
-                    const id = r.organization_selected.value.split(ARTSDATA_URI_PREFIX).pop();
-                    const orgName = getValueInLang(r.org_name_en, r.org_name_fr, r.org_name_no, currentLang);
+                    const id = r.org_selected.value.split(ARTSDATA_URI_PREFIX).pop();
+                    let orgName = r.org_name.value;
 
-                    let name;
-                    if (r.place_name_en || r.place_name_fr || r.place_name_no) {
-                        const placeName = getValueInLang(r.place_name_en, r.place_name_fr, r.place_name_no, currentLang);
-                        name = `${orgName} --> via [ ${placeName} ]`;
-                    } else {
-                        name = orgName;
+                    if (r.type.value === 'http://schema.org/Place') {
+                        const placeName = r.place_name?.value;
+                        orgName = orgName.concat(` --> via [ ${placeName} ]`)
                     }
 
                     if (!map.has(id)) {
                         map.set(id, {
                             id,
-                            name,
-                            description: getValueInLang(r.org_desc_en, r.org_desc_fr, r.org_desc_no, currentLang)
+                            name: orgName,
+                            description: r.org_desc.value
                         });
                     }
                 });
@@ -408,14 +404,14 @@
 
 
             debounceTimer = setTimeout(async () => {
-                await searchAndDisplayResult(searchQuery, selectedRegion)
+                await searchAndDisplayResult(searchQuery, selectedRegion, currentLang)
 
             }, 200); // 1 second debounce
         });
 
-        async function searchAndDisplayResult(query, selectedRegion) {
+        async function searchAndDisplayResult(query, selectedRegion, currentLang) {
             try {
-                const results = await searchPlaces(query, selectedRegion);
+                const results = await searchPlaces(query, selectedRegion, currentLang);
                 displayResults(results);
                 searchSpinner.style.display = 'none';
             } catch (error) {
@@ -442,7 +438,7 @@
                 searchSpinner.style.display = 'flex';
                 searchStatus.style.display = 'none';
                 debounceTimer = setTimeout(async () => {
-                    await searchAndDisplayResult(searchQuery, selectedRegion)
+                    await searchAndDisplayResult(searchQuery, selectedRegion, currentLang)
 
                 }, 200); // 1 second debounce
             }
