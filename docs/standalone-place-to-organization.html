@@ -84,15 +84,17 @@
                     <p id="ui-lead">Search for organizations using the Artsdata API</p>
                 </div>
 
-<!--                <label for="regionSelect" class="form-label">Select Address Region</label>-->
-<!--                <select id="regionSelect" class="form-select mb-3">-->
-<!--                    <option value="">Select address region</option>-->
-<!--                </select>-->
-
                 <!-- Field Label (Outside React Widget) -->
                 <h5 id="ui-label">Which other organization(s) did you attend within the past 12 months?</h5>
                 <label id="ui-description" for="organizationSearch" class="form-label">
-                    Type in and select as many organization names as needed. If you don’t know the name of the organization whose live performances you attended, type in the name of the venue.</label>
+
+                    <label for="regionSelect" class="form-label">Select Address Region</label>
+                    <select id="regionSelect" class="form-select mb-3">
+                        <option value="">Select address region</option>
+                    </select>
+
+                    Type in and select as many organization names as needed. If you don’t know the name of the
+                    organization whose live performances you attended, type in the name of the venue.</label>
                 
                 <!-- Search Widget -->
                 <div class="search-container">
@@ -208,10 +210,15 @@
                ?entities schema:name ?place_name_lang .
                 filter(Lang(?place_name_lang) = "USER_LANGUAGE_PLACEHOLDER")
             }
+            OPTIONAL{
+                ?entities schema:address/schema:addressRegion ?region
+                BIND(IF(bound(?region) && ?region = 'NB',TRUE,FALSE) AS ?hasRegion)
+            }
                 BIND(schema:Place as ?type)
                 ?entities (ado:usedBy | ado:ownedBy | ado:hasResident | ado:managedBy ) ?org .
             }
             BIND(IF(bound(?org),?org,?entities) as ?selected)
+
             FILTER(?score > 3)
 
             ?selected schema:name ?org_name_anylang.
@@ -228,7 +235,7 @@
                 filter(Lang(?org_desc_lang) = "USER_LANGUAGE_PLACEHOLDER")
             }
         } GROUP BY ?entities ?org
-        ORDER BY ?type DESC(?score)
+        ORDER BY ?type DESC(?hasRegion) DESC(?score)
         LIMIT 30`;
 
         let debounceTimer = null;
@@ -292,7 +299,8 @@
             try {
                 const sparqlQuery = SPARQL_TEMPLATE
                     .replace("QUERY_PLACEHOLDER", transformSearchQuery(query))
-                    .replaceAll("USER_LANGUAGE_PLACEHOLDER", currentLang.toLowerCase());
+                    .replaceAll("USER_LANGUAGE_PLACEHOLDER", currentLang.toLowerCase())
+                    .replaceAll("REGION_PLACEHOLDER", region);
                const params = new URLSearchParams();
                 params.append("query", sparqlQuery);
 
