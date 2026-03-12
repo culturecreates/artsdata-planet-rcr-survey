@@ -90,7 +90,9 @@
 <!--                </select>-->
 
                 <!-- Field Label (Outside React Widget) -->
-                <label id="ui-label" for="organizationSearch" class="form-label">Select an Organization</label>
+                <h5 id="ui-label">Which other organization(s) did you attend within the past 12 months?</h5>
+                <label id="ui-description" for="organizationSearch" class="form-label">
+                    Type in and select as many organization names as needed. If you don’t know the name of the organization whose live performances you attended, type in the name of the venue.</label>
                 
                 <!-- Search Widget -->
                 <div class="search-container">
@@ -99,7 +101,7 @@
                             type="text"
                             class="form-control"
                             id="organizationSearch"
-                            placeholder="Start typing to search for organizations..."
+                            placeholder="Start typing to search..."
                             autocomplete="off"
                         />
                         <div id="searchSpinner" class="spinner-container" style="display: none;">
@@ -157,9 +159,10 @@
                 toggle: 'FR',
                 title: 'Artsdata API Demo',
                 lead : 'Search for organizations using the Artsdata API',
-                label: 'Select an Organization',
+                label: 'Which other organization(s) did you attend within the past 12 months?',
+                description :'Type in and select as many organization names as needed. If you don’t know the name of the organization whose live performances you attended, type in the name of the venue.',
                 descLabel: 'Description:',
-                searchPlaceHolder : "Start typing to search for organization",
+                searchPlaceHolder : "Start typing to search...",
                 footer: "Powered by",
                 widgetText : "This area is outside the widget to demonstrate integration with other parts of your website."
             },
@@ -167,9 +170,10 @@
                 toggle: 'EN',
                 title: 'Démo de l\'API Artsdata',
                 lead: 'Recherchez des lieux à l\'aide de l\'API Artsdata',
-                label: 'Sélectionnez une organisation',
+                label: 'À quelles autres organisations avez-vous assisté au cours des 12 derniers mois ?',
+                description:'Saisissez et sélectionnez autant de noms d\'organisations que nécessaire. Si vous ne connaissez pas le nom de l\'organisation dont vous avez assisté aux spectacles, saisissez le nom de la salle.',
                 descLabel: 'Description :',
-                searchPlaceHolder : "Commencez à taper pour rechercher une organisation",
+                searchPlaceHolder : "Commencez à taper pour rechercher...",
                 footer: "Propulsé par",
                 widgetText : "Cette zone se trouve à l'extérieur du widget pour démontrer l'intégration avec d'autres parties de votre site Web."
             }
@@ -241,6 +245,7 @@
             document.getElementById('ui-title').textContent = t.title;
             document.getElementById('ui-lead').textContent = t.lead;
             document.getElementById('ui-label').textContent = t.label;
+            document.getElementById('ui-description').textContent = t.description;
             document.getElementById('ui-desc-label').textContent = t.descLabel;
             document.getElementById('organizationSearch').placeholder = t.searchPlaceHolder;
             document.getElementById('ui-footer-text').textContent = t.footer;
