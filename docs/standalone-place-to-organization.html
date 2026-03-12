@@ -211,7 +211,9 @@
             FILTER(?score > 3)
 
             ?selected schema:name ?org_name_anylang.
+            OPTIONAL {
             ?selected schema:disambiguatingDescription ?org_desc_anylang.
+            }
 
             OPTIONAL {
                ?selected schema:name ?org_name_lang .
