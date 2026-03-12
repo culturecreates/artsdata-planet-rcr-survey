@@ -81,7 +81,7 @@
                 <!-- Page Heading (Outside React Widget) -->
                 <div class="text-center mb-4">
                     <h1 id="ui-title">Artsdata API Demo</h1>
-                    <p id="ui-lead">Search for places using the Artsdata API</p>
+                    <p id="ui-lead">Search for organizations using the Artsdata API</p>
                 </div>
 
 <!--                <label for="regionSelect" class="form-label">Select Address Region</label>-->
@@ -90,7 +90,7 @@
 <!--                </select>-->
 
                 <!-- Field Label (Outside React Widget) -->
-                <label id="ui-label" for="placeSearch" class="form-label">Select a Organization</label>
+                <label id="ui-label" for="organizationSearch" class="form-label">Select an Organization</label>
                 
                 <!-- Search Widget -->
                 <div class="search-container">
@@ -98,8 +98,8 @@
                         <input
                             type="text"
                             class="form-control"
-                            id="placeSearch"
-                            placeholder="Start typing to search for places..."
+                            id="organizationSearch"
+                            placeholder="Start typing to search for organizations..."
                             autocomplete="off"
                         />
                         <div id="searchSpinner" class="spinner-container" style="display: none;">
@@ -156,7 +156,7 @@
             en: {
                 toggle: 'FR',
                 title: 'Artsdata API Demo',
-                lead : 'Search for places using the Artsdata API',
+                lead : 'Search for organizations using the Artsdata API',
                 label: 'Select an Organization',
                 descLabel: 'Description:',
                 searchPlaceHolder : "Start typing to search for organization",
@@ -230,7 +230,7 @@
         let debounceTimer = null;
         let selectedRegion = null;
         let searchQuery = null;
-        const searchInput = document.getElementById('placeSearch');
+        const searchInput = document.getElementById('organizationSearch');
         const dropdownResults = document.getElementById('dropdownResults');
         const searchStatus = document.getElementById('searchStatus');
         const searchSpinner = document.getElementById('searchSpinner');
@@ -242,7 +242,7 @@
             document.getElementById('ui-lead').textContent = t.lead;
             document.getElementById('ui-label').textContent = t.label;
             document.getElementById('ui-desc-label').textContent = t.descLabel;
-            document.getElementById('placeSearch').placeholder = t.searchPlaceHolder;
+            document.getElementById('organizationSearch').placeholder = t.searchPlaceHolder;
             document.getElementById('ui-footer-text').textContent = t.footer;
             document.getElementById('widget-text').textContent = t.widgetText;
         }
@@ -282,7 +282,7 @@
         }
 
         // Search places
-        async function searchPlaces(query, region, currentLang) {
+        async function searchOrganizations(query, region, currentLang) {
 
             try {
                 const sparqlQuery = SPARQL_TEMPLATE
@@ -363,10 +363,10 @@
 
 
         // Select a Organization
-        function selectOrganization(place) {
-            const name = extractString(place.name);
-            const description = extractString(place.description);
-            const id = place.id;
+        function selectOrganization(organization) {
+            const name = extractString(organization.name);
+            const description = extractString(organization.description);
+            const id = organization.id;
 
             // Update external section
             document.getElementById('external-name').textContent = name;
@@ -409,7 +409,7 @@
 
         async function searchAndDisplayResult(query, selectedRegion, currentLang) {
             try {
-                const results = await searchPlaces(query, selectedRegion, currentLang);
+                const results = await searchOrganizations(query, selectedRegion, currentLang);
                 displayResults(results);
                 searchSpinner.style.display = 'none';
             } catch (error) {
