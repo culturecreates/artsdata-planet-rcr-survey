@@ -86,15 +86,25 @@
 
                 <!-- Field Label (Outside React Widget) -->
                 <h5 id="ui-label">Which other organization(s) did you attend within the past 12 months?</h5>
-                <label id="ui-description" for="organizationSearch" class="form-label">
+<!--                <label id="ui-description" for="organizationSearch" class="form-label">-->
 
-                    <label for="regionSelect" class="form-label">Select Address Region</label>
-                    <select id="regionSelect" class="form-select mb-3">
-                        <option value="">Select address region</option>
-                    </select>
+<!--                    <label for="regionSelect" class="form-label">Select Address Region</label>-->
+<!--                    <select id="regionSelect" class="form-select mb-3">-->
+<!--                        <option value="">Select address region</option>-->
+<!--                    </select>-->
 
-                    Type in and select as many organization names as needed. If you don’t know the name of the
-                    organization whose live performances you attended, type in the name of the venue.</label>
+                    <div class="mb-3">
+                        <label id="ui-region-label" for="regionSelect" class="form-label">Select Address Region</label>
+                        <select id="regionSelect" class="form-select">
+                            <option value="" id="ui-region-default">Select address region</option>
+                        </select>
+                    </div>
+
+                    <label id="ui-description" for="organizationSearch" class="form-label">
+                        Type in and select as many organization names as needed. If you don’t know the name of the
+                        organization whose live performances you attended, type in the name of the venue.
+                    </label>
+
                 
                 <!-- Search Widget -->
                 <div class="search-container">
@@ -162,6 +172,8 @@
                 title: 'Artsdata API Demo',
                 lead : 'Search for organizations using the Artsdata API',
                 label: 'Which other organization(s) did you attend within the past 12 months?',
+                regionLabel: 'Select Address Region',
+                regionDefault: 'Select address region',
                 description :'Type in and select as many organization names as needed. If you don’t know the name of the organization whose live performances you attended, type in the name of the venue.',
                 descLabel: 'Description:',
                 searchPlaceHolder : "Start typing to search...",
@@ -173,6 +185,8 @@
                 title: 'Démo de l\'API Artsdata',
                 lead: 'Recherchez des lieux à l\'aide de l\'API Artsdata',
                 label: 'À quelles autres organisations avez-vous assisté au cours des 12 derniers mois ?',
+                regionLabel: 'Sélectionnez la région',
+                regionDefault: 'Choisir une région',
                 description:'Saisissez et sélectionnez autant de noms d\'organisations que nécessaire. Si vous ne connaissez pas le nom de l\'organisation dont vous avez assisté aux spectacles, saisissez le nom de la salle.',
                 descLabel: 'Description :',
                 searchPlaceHolder : "Commencez à taper pour rechercher...",
@@ -257,6 +271,8 @@
             document.getElementById('organizationSearch').placeholder = t.searchPlaceHolder;
             document.getElementById('ui-footer-text').textContent = t.footer;
             document.getElementById('widget-text').textContent = t.widgetText;
+            document.getElementById('ui-region-label').textContent = t.regionLabel;
+            document.getElementById('ui-region-default').textContent = t.regionDefault;
         }
 
         document.getElementById('langToggle').addEventListener('click', () => {
