@@ -71,9 +71,6 @@
     </style>
 </head>
 <body>
-<div class="lang-toggle-container">
-    <button id="langToggle" class="btn btn-outline-secondary btn-sm">FR</button>
-</div>
 
     <div class="container py-5">
         <div class="row justify-content-center">
@@ -224,14 +221,6 @@
         const dropdownResults = document.getElementById('dropdownResults');
         const searchStatus = document.getElementById('searchStatus');
         const searchSpinner = document.getElementById('searchSpinner');
-
-        document.getElementById('langToggle').addEventListener('click', () => {
-            currentLang = currentLang === 'en' ? 'fr' : 'en';
-            document.getElementById('langToggle').textContent = currentLang.toUpperCase();
-            if (searchInput.value.trim()) {
-                searchAndDisplayResult(searchInput.value.trim(), selectedRegion, currentLang);
-            }
-        });
 
         // Extract string from multilingual value
         function extractString(value) {
