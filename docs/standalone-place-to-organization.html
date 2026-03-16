@@ -160,35 +160,6 @@
         const API_BASE_URL = "https://db.artsdata.ca/repositories/artsdata?timeout=2";
         const ARTSDATA_URI_PREFIX = "http://kg.artsdata.ca/resource/";
 
-        const translations = {
-            en: {
-                toggle: 'FR',
-                title: 'Artsdata API Demo',
-                lead : 'Search for organizations using the Artsdata API',
-                label: 'Which other organization(s) did you attend within the past 12 months?',
-                regionLabel: 'Select Address Region',
-                regionDefault: 'Select address region',
-                description :'Type in and select as many organization names as needed. If you don’t know the name of the organization whose live performances you attended, type in the name of the venue.',
-                descLabel: 'Description:',
-                searchPlaceHolder : "Start typing to search...",
-                footer: "Powered by",
-                widgetText : "This area is outside the widget to demonstrate integration with other parts of your website."
-            },
-            fr: {
-                toggle: 'EN',
-                title: 'Démo de l\'API Artsdata',
-                lead: 'Recherchez des lieux à l\'aide de l\'API Artsdata',
-                label: 'À quelles autres organisations avez-vous assisté au cours des 12 derniers mois ?',
-                regionLabel: 'Sélectionnez la région',
-                regionDefault: 'Choisir une région',
-                description:'Saisissez et sélectionnez autant de noms d\'organisations que nécessaire. Si vous ne connaissez pas le nom de l\'organisation dont vous avez assisté aux spectacles, saisissez le nom de la salle.',
-                descLabel: 'Description :',
-                searchPlaceHolder : "Commencez à taper pour rechercher...",
-                footer: "Propulsé par",
-                widgetText : "Cette zone se trouve à l'extérieur du widget pour démontrer l'intégration avec d'autres parties de votre site Web."
-            }
-        };
-
         const SPARQL_TEMPLATE =
             `PREFIX ado: <http://kg.artsdata.ca/ontology/>
         PREFIX schema: <http://schema.org/>
@@ -254,24 +225,9 @@
         const searchStatus = document.getElementById('searchStatus');
         const searchSpinner = document.getElementById('searchSpinner');
 
-        function updateUI() {
-            const t = translations[currentLang];
-            document.getElementById('langToggle').textContent = t.toggle;
-            document.getElementById('ui-title').textContent = t.title;
-            document.getElementById('ui-lead').textContent = t.lead;
-            document.getElementById('ui-label').textContent = t.label;
-            document.getElementById('ui-description').textContent = t.description;
-            document.getElementById('ui-desc-label').textContent = t.descLabel;
-            document.getElementById('organizationSearch').placeholder = t.searchPlaceHolder;
-            document.getElementById('ui-footer-text').textContent = t.footer;
-            document.getElementById('widget-text').textContent = t.widgetText;
-            document.getElementById('ui-region-label').textContent = t.regionLabel;
-            document.getElementById('ui-region-default').textContent = t.regionDefault;
-        }
-
         document.getElementById('langToggle').addEventListener('click', () => {
             currentLang = currentLang === 'en' ? 'fr' : 'en';
-            updateUI();
+            document.getElementById('langToggle').textContent = currentLang.toUpperCase();
             if (searchInput.value.trim()) {
                 searchAndDisplayResult(searchInput.value.trim(), selectedRegion, currentLang);
             }
