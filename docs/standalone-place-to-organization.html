@@ -368,7 +368,19 @@
         // Display results in dropdown
         function displayResults(formattedResults) {
             dropdownResults.innerHTML = "";
-            // clear previous
+
+            if (formattedResults?.length === 0) {
+                dropdownResults.classList.add('show');
+                dropdownResults.innerHTML = `
+                    <div class="dropdown-item-custom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">No matching results...</div>
+                        </div>
+                    </div>
+                    `;
+                return;
+            }
+
             formattedResults.forEach(result => {
                 const item = document.createElement('div');
                 item.className = 'dropdown-item-custom';
