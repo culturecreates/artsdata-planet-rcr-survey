@@ -71,6 +71,9 @@
     </style>
 </head>
 <body>
+<div class="lang-toggle-container">
+    <button id="langToggle" class="btn btn-outline-secondary btn-sm">FR</button>
+</div>
 
     <div class="container py-5">
         <div class="row justify-content-center">
@@ -152,8 +155,20 @@
         </div>
     </div>
 
+    <!--This script handles the language toggle capability -->
     <script>
         let currentLang = 'en';
+        document.getElementById('langToggle').addEventListener('click', () => {
+            currentLang = currentLang === 'en' ? 'fr' : 'en';
+            document.getElementById('langToggle').textContent = currentLang.toUpperCase();
+            if (searchInput.value.trim()) {
+                searchAndDisplayResult(searchInput.value.trim(), selectedRegion, currentLang);
+            }
+        });
+    </script>
+
+    <!-- script   -->
+    <script>
         const API_BASE_URL = "https://db.artsdata.ca/repositories/artsdata?timeout=2";
         const ARTSDATA_URI_PREFIX = "http://kg.artsdata.ca/resource/";
 
@@ -222,14 +237,6 @@
         const searchStatus = document.getElementById('searchStatus');
         const searchSpinner = document.getElementById('searchSpinner');
 
-        // Extract string from multilingual value
-        function extractString(value) {
-            if (typeof value === 'string') return value;
-            if (value && value.values && value.values.length > 0) {
-                return value.values[0].str || '';
-            }
-            return '';
-        }
 
         function transformSearchQuery(query) {
             // Remove common lucene special chars
@@ -318,8 +325,8 @@
             formattedResults.forEach(result => {
                 const item = document.createElement('div');
                 item.className = 'dropdown-item-custom';
-                const name = extractString(result.name);
-                const description = extractString(result.description);
+                const name = result.name;
+                const description = result.description;
                 const id = result.id;
                 item.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start">
