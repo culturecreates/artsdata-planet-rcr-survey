@@ -155,7 +155,7 @@
         </div>
     </div>
 
-    <!--This script handles the language toggle capability -->
+    <!--This script handles the language toggle capability, which is optional during external integration -->
     <script>
         let currentLang = 'en';
         document.getElementById('langToggle').addEventListener('click', () => {
@@ -167,7 +167,7 @@
         });
     </script>
 
-    <!-- script   -->
+    <!--Main script-->
     <script>
         const API_BASE_URL = "https://db.artsdata.ca/repositories/artsdata?timeout=2";
         const ARTSDATA_URI_PREFIX = "http://kg.artsdata.ca/resource/";
@@ -356,8 +356,6 @@
             document.getElementById('external-description').textContent = description || 'N/A';
             document.getElementById('external-result-content').style.display = 'block';
             document.getElementById('external-result').classList.add('has-data');
-
-            // Clear search and hide dropdown
             searchInput.value = '';
             dropdownResults.classList.remove('show');
         }
@@ -380,8 +378,6 @@
 
             searchSpinner.style.display = 'flex';
             searchStatus.style.display = 'none';
-
-
             debounceTimer = setTimeout(async () => {
                 await searchAndDisplayResult(searchQuery, selectedRegion, currentLang)
 
@@ -410,7 +406,6 @@
             regionSelect.appendChild(option);
         });
 
-
         regionSelect.addEventListener("change", async (e) => {
             selectedRegion = e.target.value;
             if (searchQuery) {
@@ -422,7 +417,6 @@
                 }, 200); // 1 second debounce
             }
         });
-
 
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
