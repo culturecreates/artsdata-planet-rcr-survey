@@ -345,8 +345,8 @@
 
         // Select a Organization
         function selectOrganization(organization) {
-            const name = extractString(organization.name);
-            const description = extractString(organization.description);
+            const name = organization.name;
+            const description = organization.description;
             const id = organization.id;
 
             // Update external section
