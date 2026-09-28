@@ -164,6 +164,9 @@
             } UNION {
                 ?entities a schema:Place  .
                  BIND(schema:Place as ?type)
+            } UNION {
+                ?entities a schema:Person  .
+                 BIND(schema:Person as ?type)
             }
         ?entities schema:name ?entity_names .
         FILTER(?score > 3) 
